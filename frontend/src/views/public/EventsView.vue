@@ -1,5 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useEventsStore } from '@/stores/events'
+import EventList from '@/components/events/EventList.vue'
+
 const appName = import.meta.env.VITE_APP_NAME
+const eventsStore = useEventsStore()
+
+onMounted(() => {
+  eventsStore.fetchEvents()
+  eventsStore.fetchEventTypes()
+})
 </script>
 
 <template>
@@ -15,10 +25,12 @@ const appName = import.meta.env.VITE_APP_NAME
 
     <v-main>
       <v-container>
-        <h1 class="text-h3 mb-6">Events</h1>
-        <v-alert type="info">
-          Events page - Coming soon! This will show a list of all available events with filters.
-        </v-alert>
+        <h1 class="text-h3 mb-6">All Events</h1>
+
+        <EventList
+          :events="eventsStore.events"
+          :loading="eventsStore.loading"
+        />
       </v-container>
     </v-main>
   </v-app>
