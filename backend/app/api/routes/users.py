@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UserUpdate
 from app.db.database import get_db
 from app.core.dependencies import get_current_user, require_role
+from app.core.security import get_password_hash
 
 router = APIRouter()
 
@@ -62,6 +63,110 @@ def get_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return dict(user)
+
+
+@router.put("/me", response_model=UserResponse)
+def update_current_user(
+    user_update: UserUpdate,
+    cursor=Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update current authenticated user's information"""
+    # Check if email is being updated and if it's already taken
+    if user_update.mail_address:
+        cursor.execute(
+            "SELECT user_id FROM users WHERE mail_address = %s AND user_id != %s",
+            (user_update.mail_address, current_user["user_id"])
+        )
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Build update query dynamically
+    update_fields = []
+    update_values = []
+
+    if user_update.name is not None:
+        update_fields.append("name = %s")
+        update_values.append(user_update.name)
+    if user_update.mail_address is not None:
+        update_fields.append("mail_address = %s")
+        update_values.append(user_update.mail_address)
+    if user_update.phone_number is not None:
+        update_fields.append("phone_number = %s")
+        update_values.append(user_update.phone_number)
+    if user_update.password is not None:
+        hashed_password = get_password_hash(user_update.password)
+        update_fields.append("password_hash = %s")
+        update_values.append(hashed_password)
+
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    update_values.append(current_user["user_id"])
+    query = f"""
+        UPDATE users SET {', '.join(update_fields)}
+        WHERE user_id = %s
+        RETURNING user_id, type_id, name, mail_address, phone_number, created_at
+    """
+
+    cursor.execute(query, update_values)
+    updated_user = cursor.fetchone()
+    return dict(updated_user)
+
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    cursor=Depends(get_db),
+    current_user: dict = Depends(require_role(3))  # Admin only
+):
+    """Update a user (Admin only)"""
+    # Check if user exists
+    cursor.execute("SELECT user_id FROM users WHERE user_id = %s", (user_id,))
+    if not cursor.fetchone():
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if email is being updated and if it's already taken
+    if user_update.mail_address:
+        cursor.execute(
+            "SELECT user_id FROM users WHERE mail_address = %s AND user_id != %s",
+            (user_update.mail_address, user_id)
+        )
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Build update query dynamically
+    update_fields = []
+    update_values = []
+
+    if user_update.name is not None:
+        update_fields.append("name = %s")
+        update_values.append(user_update.name)
+    if user_update.mail_address is not None:
+        update_fields.append("mail_address = %s")
+        update_values.append(user_update.mail_address)
+    if user_update.phone_number is not None:
+        update_fields.append("phone_number = %s")
+        update_values.append(user_update.phone_number)
+    if user_update.password is not None:
+        hashed_password = get_password_hash(user_update.password)
+        update_fields.append("password_hash = %s")
+        update_values.append(hashed_password)
+
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    update_values.append(user_id)
+    query = f"""
+        UPDATE users SET {', '.join(update_fields)}
+        WHERE user_id = %s
+        RETURNING user_id, type_id, name, mail_address, phone_number, created_at
+    """
+
+    cursor.execute(query, update_values)
+    updated_user = cursor.fetchone()
+    return dict(updated_user)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
