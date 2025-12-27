@@ -18,6 +18,12 @@ class UserLogin(BaseModel):
     mail_address: EmailStr
     password: str
 
+#added an update method to the user.py
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    mail_address: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    password: Optional[str] = None
 
 class UserResponse(UserBase):
     user_id: int
