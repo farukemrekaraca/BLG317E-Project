@@ -33,7 +33,8 @@ class TestEventTypes:
 
     def test_create_event_type_unauthorized(self, client, registered_user):
         """Test creating event type as regular user (should fail)"""
-        event_type_data = {"name": "Test Event Type"}
+        unique_id = uuid.uuid4().hex[:8]
+        event_type_data = {"name": f"Test Event Type {unique_id}"}
         response = client.post(
             "/api/events/types",
             json=event_type_data,

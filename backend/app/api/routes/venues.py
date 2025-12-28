@@ -11,9 +11,28 @@ router = APIRouter()
 def create_venue(
     venue: VenueCreate,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(2))  # Venue Owner or above
+    current_user: dict = Depends(require_role(2))  # Venue Owner or Admin only
 ):
-    """Create a new venue (Venue Owner/Organizer/Admin only)"""
+    """
+    Create a new venue with automatic section and seat generation (Venue Owner or Admin only).
+
+    This endpoint:
+    1. Validates that total seats across sections doesn't exceed venue seat_count
+    2. Creates the venue record
+    3. For each section configuration:
+       - Creates a section with the prefix as the name
+       - Creates seats with names like "{prefix}1", "{prefix}2", etc.
+    """
+    # Validate that total section seats don't exceed venue capacity
+    total_section_seats = sum(section.seat_count for section in venue.sections)
+    if total_section_seats > venue.seat_count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total seats across sections ({total_section_seats}) exceeds venue capacity ({venue.seat_count})"
+        )
+
+    # Create the venue
+    section_count = len(venue.sections)
     cursor.execute(
         """
         INSERT INTO venues (owner_id, name, country, city, address, media_url, website_url, seat_count, section_count)
@@ -21,9 +40,36 @@ def create_venue(
         RETURNING venue_id, owner_id, name, country, city, address, media_url, website_url, seat_count, section_count
         """,
         (current_user["user_id"], venue.name, venue.country, venue.city, venue.address,
-         venue.media_url, venue.website_url, venue.seat_count, venue.section_count)
+         venue.media_url, venue.website_url, venue.seat_count, section_count)
     )
     new_venue = cursor.fetchone()
+    venue_id = new_venue["venue_id"]
+
+    # Create sections and seats
+    for section_config in venue.sections:
+        # Create the section
+        cursor.execute(
+            """
+            INSERT INTO sections (venue_id, name)
+            VALUES (%s, %s)
+            RETURNING section_id
+            """,
+            (venue_id, section_config.prefix)
+        )
+        section = cursor.fetchone()
+        section_id = section["section_id"]
+
+        # Create seats for this section
+        for seat_number in range(1, section_config.seat_count + 1):
+            seat_name = f"{section_config.prefix}{seat_number}"
+            cursor.execute(
+                """
+                INSERT INTO seats (section_id, name)
+                VALUES (%s, %s)
+                """,
+                (section_id, seat_name)
+            )
+
     return dict(new_venue)
 
 
@@ -82,9 +128,15 @@ def update_venue(
     venue_id: int,
     venue_update: VenueUpdate,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(2))
+    current_user: dict = Depends(require_role(2))  # Venue Owner or Admin only
 ):
-    """Update a venue (only by the owner who created it or admin)"""
+    """
+    Update venue metadata only (Venue Owner or Admin).
+
+    Note: Venue structure (seat_count, section_count, sections, seats) cannot be changed after creation.
+    Only metadata like name, location, and URLs can be updated.
+    Only the venue owner or admin can update venues.
+    """
     # Check if venue exists and user is the owner
     cursor.execute("SELECT owner_id FROM venues WHERE venue_id = %s", (venue_id,))
     venue = cursor.fetchone()
@@ -101,7 +153,7 @@ def update_venue(
     if venue["owner_id"] != current_user["user_id"] and user_auth["authorization_level"] < 3:
         raise HTTPException(status_code=403, detail="Not authorized to update this venue")
 
-    # Build update query
+    # Build update query (only metadata fields, not structure)
     update_fields = []
     update_values = []
 
@@ -123,12 +175,6 @@ def update_venue(
     if venue_update.website_url is not None:
         update_fields.append("website_url = %s")
         update_values.append(venue_update.website_url)
-    if venue_update.seat_count is not None:
-        update_fields.append("seat_count = %s")
-        update_values.append(venue_update.seat_count)
-    if venue_update.section_count is not None:
-        update_fields.append("section_count = %s")
-        update_values.append(venue_update.section_count)
 
     if not update_fields:
         raise HTTPException(status_code=400, detail="No fields to update")

@@ -38,25 +38,50 @@ class TestVenues:
         response = client.get("/api/venues/99999")
         assert response.status_code == 404
 
-    def test_create_venue_as_organizer(self, client, registered_organizer):
-        """Test creating a venue"""
+    def test_create_venue_as_venue_owner(self, client, registered_venue_owner):
+        """Test creating a venue as venue owner (should succeed)"""
         venue_data = {
             "name": "Test Venue",
             "country": "Turkey",
             "city": "Istanbul",
             "address": "Test Address 123",
             "seat_count": 1000,
-            "section_count": 5
+            "sections": [
+                {"prefix": "VIP", "seat_count": 100},
+                {"prefix": "General", "seat_count": 500},
+                {"prefix": "Balcony", "seat_count": 400}
+            ]
+        }
+        response = client.post(
+            "/api/venues",
+            json=venue_data,
+            headers=registered_venue_owner["headers"]
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == venue_data["name"]
+        assert data["seat_count"] == 1000
+        assert data["section_count"] == 3
+
+    def test_create_venue_as_organizer(self, client, registered_organizer):
+        """Test creating venue as organizer (should fail - organizers can't create venues)"""
+        venue_data = {
+            "name": "Test Venue",
+            "country": "Turkey",
+            "city": "Istanbul",
+            "address": "Test Address 123",
+            "seat_count": 1000,
+            "sections": [
+                {"prefix": "VIP", "seat_count": 100},
+                {"prefix": "General", "seat_count": 900}
+            ]
         }
         response = client.post(
             "/api/venues",
             json=venue_data,
             headers=registered_organizer["headers"]
         )
-        assert response.status_code == 201
-        data = response.json()
-        assert data["name"] == venue_data["name"]
-        assert data["city"] == venue_data["city"]
+        assert response.status_code == 403  # Organizers don't have permission
 
     def test_create_venue_unauthorized(self, client):
         """Test creating venue without authentication"""
@@ -66,7 +91,10 @@ class TestVenues:
             "city": "Istanbul",
             "address": "Test Address 123",
             "seat_count": 1000,
-            "section_count": 5
+            "sections": [
+                {"prefix": "VIP", "seat_count": 100},
+                {"prefix": "General", "seat_count": 900}
+            ]
         }
         response = client.post("/api/venues", json=venue_data)
         assert response.status_code == 401

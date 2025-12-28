@@ -46,12 +46,12 @@ class TestRegistration:
 class TestLogin:
     """Test user login"""
 
-    def test_login_success(self, client, registered_user):
+    def test_login_success(self, client, test_user_data, registered_user):
         """Test successful login"""
-        # Login is already tested in the fixture, but let's test it again
+        # Use the actual email from the registered user
         response = client.post("/api/auth/login", json={
-            "mail_address": "testuser@example.com",
-            "password": "testpassword123"
+            "mail_address": test_user_data["mail_address"],
+            "password": test_user_data["password"]
         })
         assert response.status_code == 200
         data = response.json()

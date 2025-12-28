@@ -40,3 +40,31 @@ class TicketTypeResponse(TicketTypeBase):
 
     class Config:
         from_attributes = True
+
+
+class SectionTicketTypeMapping(BaseModel):
+    section_id: int
+    ticket_type_id: int
+
+
+class BulkTicketGenerateRequest(BaseModel):
+    section_id: int
+    ticket_type_id: int
+
+
+class BulkTicketGenerateResponse(BaseModel):
+    tickets_created: int
+    section_id: int
+    ticket_type_id: int
+    message: str
+
+
+class EventBulkGenerateRequest(BaseModel):
+    event_id: int
+
+
+class EventBulkGenerateResponse(BaseModel):
+    tickets_created: int
+    event_id: int
+    mappings_processed: int
+    message: str

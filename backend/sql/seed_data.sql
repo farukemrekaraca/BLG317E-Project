@@ -1,9 +1,10 @@
 -- Insert User Types
+-- Authorization hierarchy: Admin (3) > Venue Owner (2) > Organizer (1) > Attendee (0)
 INSERT INTO user_type (type_name, authorization_level) VALUES
 ('Admin', 3),
-('Organizer', 2),
+('Organizer', 1),
 ('Venue Owner', 2),
-('Attendee', 1);
+('Attendee', 0);
 
 -- Insert Users (password: 'password123' hashed with bcrypt)
 -- Note: In production, these will be created through the registration endpoint

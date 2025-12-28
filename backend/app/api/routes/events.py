@@ -12,7 +12,7 @@ router = APIRouter()
 def create_event_type(
     event_type: EventTypeCreate,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(2))  # Organizer or above
+    current_user: dict = Depends(require_role(1))  # Organizer or above
 ):
     """Create a new event type (Admin/Organizer only)"""
     cursor.execute(
@@ -49,7 +49,7 @@ def get_event_type(event_type_id: int, cursor=Depends(get_db)):
 def create_event(
     event: EventCreate,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(2))  # Organizer or above
+    current_user: dict = Depends(require_role(1))  # Organizer or above
 ):
     """Create a new event (Organizer only)"""
     # Verify venue exists
@@ -117,7 +117,7 @@ def update_event(
     event_id: int,
     event_update: EventUpdate,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(2))  # Organizer or above
+    current_user: dict = Depends(require_role(1))  # Organizer or above
 ):
     """Update an event (only by the organizer who created it)"""
     # Check if event exists and user is the organizer
@@ -171,7 +171,7 @@ def update_event(
 def delete_event(
     event_id: int,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(2))  # Organizer or above
+    current_user: dict = Depends(require_role(1))  # Organizer or above
 ):
     """Delete an event (Organizer can delete own events, Admin can delete any)"""
     # Check if event exists and get organizer_id
