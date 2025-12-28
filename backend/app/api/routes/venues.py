@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from app.schemas.venue import VenueCreate, VenueUpdate, VenueResponse
+from app.schemas.venue import VenueCreate, VenueUpdate, VenueResponse, SectionResponse, SeatResponse
 from app.db.database import get_db
 from app.core.dependencies import get_current_user, require_role
 
@@ -17,18 +17,18 @@ def create_venue(
     Create a new venue with automatic section and seat generation (Venue Owner or Admin only).
 
     This endpoint:
-    1. Validates that total seats across sections doesn't exceed venue seat_count
+    1. Validates that total seats across sections exactly matches venue seat_count
     2. Creates the venue record
     3. For each section configuration:
        - Creates a section with the prefix as the name
        - Creates seats with names like "{prefix}1", "{prefix}2", etc.
     """
-    # Validate that total section seats don't exceed venue capacity
+    # Validate that total section seats exactly matches venue capacity
     total_section_seats = sum(section.seat_count for section in venue.sections)
-    if total_section_seats > venue.seat_count:
+    if total_section_seats != venue.seat_count:
         raise HTTPException(
             status_code=400,
-            detail=f"Total seats across sections ({total_section_seats}) exceeds venue capacity ({venue.seat_count})"
+            detail=f"Total seats across sections ({total_section_seats}) must exactly match venue capacity ({venue.seat_count})"
         )
 
     # Create the venue
@@ -203,3 +203,72 @@ def delete_venue(
     if not deleted:
         raise HTTPException(status_code=404, detail="Venue not found")
     return None
+
+
+@router.get("/{venue_id}/seats", response_model=List[SeatResponse])
+def get_venue_seats(venue_id: int, cursor=Depends(get_db)):
+    """Get all seats for a specific venue"""
+    # First check if venue exists
+    cursor.execute("SELECT venue_id FROM venues WHERE venue_id = %s", (venue_id,))
+    venue = cursor.fetchone()
+    if not venue:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    
+    cursor.execute(
+        """
+        SELECT s.seat_id, s.section_id, s.name
+        FROM seats s
+        JOIN sections sec ON s.section_id = sec.section_id
+        WHERE sec.venue_id = %s
+        ORDER BY sec.name, s.name
+        """,
+        (venue_id,)
+    )
+    seats = cursor.fetchall()
+    return [dict(s) for s in seats]
+
+
+@router.get("/{venue_id}/sections", response_model=List[SectionResponse])
+def get_venue_sections(venue_id: int, cursor=Depends(get_db)):
+    """Get all sections for a specific venue"""
+    # First check if venue exists
+    cursor.execute("SELECT venue_id FROM venues WHERE venue_id = %s", (venue_id,))
+    venue = cursor.fetchone()
+    if not venue:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    
+    cursor.execute(
+        """
+        SELECT s.section_id, s.venue_id, s.name, COUNT(se.seat_id) as seat_count
+        FROM sections s
+        LEFT JOIN seats se ON s.section_id = se.section_id
+        WHERE s.venue_id = %s
+        GROUP BY s.section_id, s.venue_id, s.name
+        ORDER BY s.name
+        """,
+        (venue_id,)
+    )
+    sections = cursor.fetchall()
+    return [dict(s) for s in sections]
+
+
+@router.get("/sections/{section_id}/seats", response_model=List[SeatResponse])
+def get_section_seats(section_id: int, cursor=Depends(get_db)):
+    """Get all seats for a specific section"""
+    # First check if section exists
+    cursor.execute("SELECT section_id FROM sections WHERE section_id = %s", (section_id,))
+    section = cursor.fetchone()
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    cursor.execute(
+        """
+        SELECT seat_id, section_id, name
+        FROM seats
+        WHERE section_id = %s
+        ORDER BY name
+        """,
+        (section_id,)
+    )
+    seats = cursor.fetchall()
+    return [dict(s) for s in seats]
