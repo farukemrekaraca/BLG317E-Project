@@ -9,10 +9,10 @@ INSERT INTO user_type (type_name, authorization_level) VALUES
 -- Insert Users (password: 'password123' hashed with bcrypt)
 -- Note: In production, these will be created through the registration endpoint
 INSERT INTO users (type_id, name, mail_address, phone_number, password_hash) VALUES
-(2, 'Ahmet Organizer', 'ahmet@biletix.com', '555-0001', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYkIc7Oc3aW'),
-(3, 'Ayse Venue Owner', 'ayse@gmail.com', '555-0002', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYkIc7Oc3aW'),
-(1, 'Can Admin', 'admin@system.com', '555-0003', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYkIc7Oc3aW'),
-(4, 'Mehmet Attendee', 'mehmet@gmail.com', '555-0004', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYkIc7Oc3aW');
+(2, 'Ahmet Organizer', 'ahmet@biletix.com', '555-0001', '$2b$12$2AX3addtHM.XPUNG.0SOy.RweQbko1oxYhAfuh9Pvbgu470L0wLBW'),
+(3, 'Ayse Venue Owner', 'ayse@gmail.com', '555-0002', '$2b$12$2AX3addtHM.XPUNG.0SOy.RweQbko1oxYhAfuh9Pvbgu470L0wLBW'),
+(1, 'Can Admin', 'admin@system.com', '555-0003', '$2b$12$2AX3addtHM.XPUNG.0SOy.RweQbko1oxYhAfuh9Pvbgu470L0wLBW'),
+(4, 'Mehmet Attendee', 'mehmet@gmail.com', '555-0004', '$2b$12$2AX3addtHM.XPUNG.0SOy.RweQbko1oxYhAfuh9Pvbgu470L0wLBW');
 
 -- Insert Event Types
 INSERT INTO event_type (name) VALUES
