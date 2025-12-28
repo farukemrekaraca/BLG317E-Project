@@ -40,6 +40,67 @@ def reset_test_database():
 
     yield
 
+    # Cleanup after all tests complete
+    print("\n🧹 Cleaning up test database...")
+    try:
+        conn = psycopg.connect(settings.DATABASE_URL)
+        cursor = conn.cursor()
+
+        # Reset to clean state after all tests
+        with open('sql/schema.sql', 'r') as f:
+            cursor.execute(f.read())
+
+        with open('sql/seed_data.sql', 'r') as f:
+            cursor.execute(f.read())
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("✅ Test database cleaned up successfully!")
+
+    except Exception as e:
+        print(f"⚠️  Cleanup warning: {e}")
+
+
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_test_artifacts():
+    """
+    Automatically cleanup test artifacts after each test.
+    Removes any data created during tests that's not in seed data.
+    """
+    yield
+
+    # Cleanup after each test
+    try:
+        conn = psycopg.connect(settings.DATABASE_URL)
+        cursor = conn.cursor()
+
+        # Delete test-created data (anything with IDs higher than seed data)
+        # Seed data IDs: users 1-4, events 1-4, venues 1-3, event_types 1-5
+
+        # Delete test events (ID > 4, will cascade to ticket_types, tickets, mappings)
+        cursor.execute("DELETE FROM events WHERE event_id > 4")
+
+        # Delete test venues (ID > 3, will cascade to sections, seats, tickets)
+        cursor.execute("DELETE FROM venues WHERE venue_id > 3")
+
+        # Delete test users (ID > 4, but keep their user type)
+        cursor.execute("DELETE FROM users WHERE user_id > 4")
+
+        # Delete test event types (ID > 5)
+        cursor.execute("DELETE FROM event_type WHERE event_type_id > 5")
+
+        # Delete orphaned transactions (shouldn't happen with CASCADE, but just in case)
+        cursor.execute("DELETE FROM transactions WHERE transaction_id > 1")
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    except Exception as e:
+        # Don't fail the test if cleanup fails
+        print(f"⚠️  Cleanup warning: {e}")
+
 
 @pytest.fixture(scope="function")
 def client():

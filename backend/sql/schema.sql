@@ -63,29 +63,29 @@ CREATE TABLE events (
 -- Create Sections table
 CREATE TABLE sections (
     section_id SERIAL PRIMARY KEY,
-    venue_id INT NOT NULL REFERENCES venues(venue_id),
+    venue_id INT NOT NULL REFERENCES venues(venue_id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL
 );
 
 -- Create Seats table
 CREATE TABLE seats (
     seat_id SERIAL PRIMARY KEY,
-    section_id INT NOT NULL REFERENCES sections(section_id),
+    section_id INT NOT NULL REFERENCES sections(section_id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL
 );
 
 -- Create Ticket_Type table
 CREATE TABLE ticket_type (
     ticket_type_id SERIAL PRIMARY KEY,
-    event_id INT NOT NULL REFERENCES events(event_id),
+    event_id INT NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     price FLOAT NOT NULL
 );
 
 -- Create Section_Ticket_Type_Mapping table
 CREATE TABLE section_ticket_type_mapping (
-    section_id INT NOT NULL REFERENCES sections(section_id),
-    ticket_type_id INT NOT NULL REFERENCES ticket_type(ticket_type_id),
+    section_id INT NOT NULL REFERENCES sections(section_id) ON DELETE CASCADE,
+    ticket_type_id INT NOT NULL REFERENCES ticket_type(ticket_type_id) ON DELETE CASCADE,
     PRIMARY KEY (section_id, ticket_type_id)
 );
 
@@ -103,16 +103,16 @@ CREATE TABLE transactions (
 -- Create Tickets table
 CREATE TABLE tickets (
     ticket_id SERIAL PRIMARY KEY,
-    seat_id INT NOT NULL REFERENCES seats(seat_id),
+    seat_id INT NOT NULL REFERENCES seats(seat_id) ON DELETE CASCADE,
     owner_id INT REFERENCES users(user_id),
-    ticket_type_id INT NOT NULL REFERENCES ticket_type(ticket_type_id),
+    ticket_type_id INT NOT NULL REFERENCES ticket_type(ticket_type_id) ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL CHECK (status IN ('available', 'reserved', 'sold'))
 );
 
 -- Create Transaction_Items table
 CREATE TABLE transaction_items (
-    ticket_id INT NOT NULL REFERENCES tickets(ticket_id),
-    transaction_id INT NOT NULL REFERENCES transactions(transaction_id),
+    ticket_id INT NOT NULL REFERENCES tickets(ticket_id) ON DELETE CASCADE,
+    transaction_id INT NOT NULL REFERENCES transactions(transaction_id) ON DELETE CASCADE,
     PRIMARY KEY (ticket_id)
 );
 
