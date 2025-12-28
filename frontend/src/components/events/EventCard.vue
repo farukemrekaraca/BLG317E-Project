@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { format } from 'date-fns'
+import { useVenuesStore } from '@/stores/venues'
+import { useEventsStore } from '@/stores/events'
 import type { EventResponse } from '@/types/event'
 
 const props = defineProps<{
   event: EventResponse
 }>()
+
+const venuesStore = useVenuesStore()
+const eventsStore = useEventsStore()
 
 const formattedDate = computed(() => {
   try {
@@ -13,6 +18,16 @@ const formattedDate = computed(() => {
   } catch {
     return props.event.date
   }
+})
+
+const venueName = computed(() => {
+  const venue = venuesStore.venues.find(v => v.venue_id === props.event.venue_id)
+  return venue?.name || `Venue #${props.event.venue_id}`
+})
+
+const eventTypeName = computed(() => {
+  const eventType = eventsStore.eventTypes.find(t => t.event_type_id === props.event.event_type_id)
+  return eventType?.name || `Type #${props.event.event_type_id}`
 })
 </script>
 
@@ -34,11 +49,11 @@ const formattedDate = computed(() => {
     <v-card-text>
       <div class="d-flex align-center mb-2">
         <v-icon size="small" class="mr-2">mdi-map-marker</v-icon>
-        <span class="text-body-2">Venue ID: {{ event.venue_id }}</span>
+        <span class="text-body-2">{{ venueName }}</span>
       </div>
       <div class="d-flex align-center">
         <v-icon size="small" class="mr-2">mdi-tag</v-icon>
-        <span class="text-body-2">Type ID: {{ event.event_type_id }}</span>
+        <span class="text-body-2">{{ eventTypeName }}</span>
       </div>
     </v-card-text>
 

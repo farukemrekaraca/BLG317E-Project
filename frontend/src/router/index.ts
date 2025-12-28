@@ -79,12 +79,12 @@ const router = createRouter({
           component: () => import('@/views/organizer/DashboardView.vue'),
         },
         {
-          path: 'events',
+          path: 'my-events',
           name: 'my-events',
           component: () => import('@/views/organizer/MyEventsView.vue'),
         },
         {
-          path: 'events/create',
+          path: 'create-event',
           name: 'create-event',
           component: () => import('@/views/organizer/CreateEventView.vue'),
         },
@@ -94,7 +94,7 @@ const router = createRouter({
           component: () => import('@/views/organizer/EditEventView.vue'),
         },
         {
-          path: 'events/:id/analytics',
+          path: 'analytics',
           name: 'event-analytics',
           component: () => import('@/views/organizer/EventAnalyticsView.vue'),
         },

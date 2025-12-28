@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import datetime
 
 
 class EventBase(BaseModel):
     name: str
-    date: date
+    date: datetime
     venue_id: int
     event_type_id: int
 
@@ -16,7 +16,7 @@ class EventCreate(EventBase):
 
 class EventUpdate(BaseModel):
     name: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[datetime] = None
     venue_id: Optional[int] = None
     event_type_id: Optional[int] = None
 
