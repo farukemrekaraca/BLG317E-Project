@@ -46,8 +46,18 @@ backend/
 ├── sql/
 │   ├── schema.sql              # Database schema (12 tables)
 │   └── seed_data.sql           # Dummy data
+├── tests/                      # Unit tests
+│   ├── conftest.py
+│   ├── test_analytics.py
+│   ├── test_auth.py
+│   ├── test_events.py
+│   ├── test_tickets.py
+│   ├── test_transactions.py
+│   ├── test_users.py
+│   └── test_venues.py
 ├── requirements.txt
 ├── setup_db.py                 # Database setup script
+├── reset_db.py                 # Database reset script
 └── .env                        # Environment variables
 ```
 
@@ -124,19 +134,22 @@ The API will be available at: `http://localhost:8000`
 
 ### Users
 - `GET /api/users/me` - Get current user info
+- `PUT /api/users/me` - Update current user info
 - `GET /api/users` - List all users (Admin only)
 - `GET /api/users/{user_id}` - Get user by ID (Admin only)
+- `PUT /api/users/{user_id}` - Update user by ID (Admin only)
 - `DELETE /api/users/{user_id}` - Delete user (Admin only)
 - `GET /api/users/me/tickets` - Get my tickets
 
 ### Events
+- `GET /api/events/types` - List event types
+- `POST /api/events/types` - Create event type
+- `GET /api/events/types/{event_id}` - Get event types by event id
 - `POST /api/events` - Create event (Organizer+)
 - `GET /api/events` - List events
 - `GET /api/events/{event_id}` - Get event details
 - `PUT /api/events/{event_id}` - Update event
 - `DELETE /api/events/{event_id}` - Delete event (Admin)
-- `POST /api/events/types` - Create event type
-- `GET /api/events/types` - List event types
 
 ### Venues
 - `POST /api/venues` - Create venue (Venue Owner+)
@@ -144,15 +157,23 @@ The API will be available at: `http://localhost:8000`
 - `GET /api/venues/{venue_id}` - Get venue details
 - `PUT /api/venues/{venue_id}` - Update venue
 - `DELETE /api/venues/{venue_id}` - Delete venue (Admin)
+- `GET /api/venues/{venue_id}/seats` - List seats in the venue
+- `GET /api/venues/{venue_id}/sections` - List sections in the venue
+- `GET /api/venues/sections/{section_id}/seats` - List seats in the section
 
 ### Tickets
+- `POST /api/tickets/types` - Create ticket type
+- `GET /api/tickets/types` - List ticket types
 - `POST /api/tickets` - Create ticket (Organizer+)
 - `GET /api/tickets` - List tickets
+- `POST /api/tickets/mappings` - Create section-ticket mapping (Organizer+)
+- `GET /api/tickets/mappings` - List section-ticket mappings
+- `DELETE /api/tickets/mappings` - Delete section-ticket mappings
+- `POST /api/tickets/bulk-generate` - Create all applicable tickets for a mapping
+- `POST /api/tickets/bulk-generate-event` - Create all applicable tickets for an event
 - `GET /api/tickets/{ticket_id}` - Get ticket details
 - `PUT /api/tickets/{ticket_id}` - Update ticket
 - `DELETE /api/tickets/{ticket_id}` - Delete ticket (Admin)
-- `POST /api/tickets/types` - Create ticket type
-- `GET /api/tickets/types` - List ticket types
 
 ### Transactions
 - `POST /api/transactions` - Purchase tickets
@@ -176,14 +197,14 @@ The API will be available at: `http://localhost:8000`
    - Can delete any resource
    - View all transactions
 
-2. **Organizer** (authorization_level: 2)
+2. **Venue Owner** (authorization_level: 2)
+   - Create and manage venues
+
+3. **Organizer** (authorization_level: 1)
    - Create and manage events
    - Create ticket types
 
-3. **Venue Owner** (authorization_level: 2)
-   - Create and manage venues
-
-4. **Attendee** (authorization_level: 1)
+4. **Attendee** (authorization_level: 0)
    - Purchase tickets
    - View events and venues
 

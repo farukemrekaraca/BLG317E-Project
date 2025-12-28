@@ -32,7 +32,7 @@ def get_event_types(cursor=Depends(get_db)):
 
 
 @router.get("/types/{event_type_id}", response_model=EventTypeResponse)
-def get_event_type(event_type_id: int, cursor=Depends(get_db)):
+def get_event_type_by_id(event_type_id: int, cursor=Depends(get_db)):
     """Get a specific event type by ID"""
     cursor.execute(
         "SELECT event_type_id, name FROM event_type WHERE event_type_id = %s",

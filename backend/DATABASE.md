@@ -8,7 +8,7 @@ python reset_db.py
 ```
 - Prompts for confirmation before resetting
 - Drops all tables and recreates with seed data
-- ⚠️ **All data will be lost!**
+- **All data will be lost!**
 
 ### Reset Database (Force)
 ```bash
@@ -74,14 +74,11 @@ After resetting, the following user types are available:
 
 After reset, these users are available:
 - **Admin**: admin@system.com (password: password123)
-- **Organizer**: ahmet@biletix.com (password: password123)
+- **Organizer**: ahmet@gmail.com (password: password123)
 - **Venue Owner**: ayse@gmail.com (password: password123)
 - **Attendee**: mehmet@gmail.com (password: password123)
 
 ## Troubleshooting
-
-### Tests failing with 403/201 errors?
-→ Database has old authorization levels. Run: `python reset_db.py --force`
 
 ### SQL file not found?
 → Make sure you're running scripts from the `backend/` directory

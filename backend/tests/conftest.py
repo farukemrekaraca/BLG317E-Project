@@ -16,7 +16,7 @@ def reset_test_database():
     Reset the database before running tests.
     Runs once per test session to ensure clean state with correct authorization levels.
     """
-    print("\n🔄 Resetting test database...")
+    print("\nResetting test database...")
     try:
         conn = psycopg.connect(settings.DATABASE_URL)
         cursor = conn.cursor()
@@ -32,16 +32,16 @@ def reset_test_database():
         conn.commit()
         cursor.close()
         conn.close()
-        print("✅ Test database reset successfully!")
+        print("Test database reset successfully!")
 
     except Exception as e:
-        print(f"❌ Failed to reset test database: {e}")
+        print(f"Failed to reset test database: {e}")
         raise
 
     yield
 
     # Cleanup after all tests complete
-    print("\n🧹 Cleaning up test database...")
+    print("\nCleaning up test database...")
     try:
         conn = psycopg.connect(settings.DATABASE_URL)
         cursor = conn.cursor()
@@ -56,10 +56,10 @@ def reset_test_database():
         conn.commit()
         cursor.close()
         conn.close()
-        print("✅ Test database cleaned up successfully!")
+        print("Test database cleaned up successfully!")
 
     except Exception as e:
-        print(f"⚠️  Cleanup warning: {e}")
+        print(f"Cleanup warning: {e}")
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -99,7 +99,7 @@ def cleanup_test_artifacts():
 
     except Exception as e:
         # Don't fail the test if cleanup fails
-        print(f"⚠️  Cleanup warning: {e}")
+        print(f"Cleanup warning: {e}")
 
 
 @pytest.fixture(scope="function")
