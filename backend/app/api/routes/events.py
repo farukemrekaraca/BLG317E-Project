@@ -171,11 +171,29 @@ def update_event(
 def delete_event(
     event_id: int,
     cursor=Depends(get_db),
-    current_user: dict = Depends(require_role(3))  # Admin only
+    current_user: dict = Depends(require_role(2))  # Organizer or above
 ):
-    """Delete an event (Admin only)"""
+    """Delete an event (Organizer can delete own events, Admin can delete any)"""
+    # Check if event exists and get organizer_id
+    cursor.execute(
+        "SELECT organizer_id FROM events WHERE event_id = %s",
+        (event_id,)
+    )
+    event = cursor.fetchone()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Check if user is the organizer or admin
+    cursor.execute(
+        "SELECT authorization_level FROM user_type ut JOIN users u ON ut.user_type_id = u.type_id WHERE u.user_id = %s",
+        (current_user["user_id"],)
+    )
+    user_auth = cursor.fetchone()
+
+    # Only allow if user is the organizer or is an admin (auth_level >= 3)
+    if event["organizer_id"] != current_user["user_id"] and user_auth["authorization_level"] < 3:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this event")
+
     cursor.execute("DELETE FROM events WHERE event_id = %s RETURNING event_id", (event_id,))
     deleted = cursor.fetchone()
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Event not found")
     return None
